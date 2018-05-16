@@ -32,8 +32,9 @@ class SGMLtools:
         """Get all info from a task"""
         taskcontent = dict()
         title = task.title.string
-        self.log.debug('Found {} - {}'.format(title))
-        refstring = __splitCode(task)
+        self.log.debug('Found {}'.format(title))
+        refstring = self.__splitCode(task)
+        self.log.debug(refstring)
         topics = task.find_all("topic")
         for x in range(0, len(topics)):
             subtasks = topics[x].find_all("subtask")
@@ -41,31 +42,53 @@ class SGMLtools:
                 subtask = dict()
                 self.log.debug("Effectivity: %s\nAccomplish A320 AMM %s Subtask %s: %s" % (subtasks[y].effect['effrg'],
                                                                                            topics[x].title.string,
-                                                                                           subtask_string(subtasks[y]),
+                                                                                           self.__splitCode(subtasks[y]),
+##                                                                                           subtask_string(subtasks[y]),
                                                                                            subtasks[y].para.string))
+                if subtasks[y].find('list1') is not None:
+                    self.getTaskContent(subtasks[y].list1,1)
                 if subtasks[y].find("cblst") != None:
                     cblst = True
 
     def findListObject(self, parent_obj):
         """Extract the lists"""
         recursion_level = 1
-        listcaptureRE = re.compile('list(\d)')
-        lists = parent_obj.find_all(listcaptureRE).name
+        listcaptureRE = re.compile('list(\d)', re.IGNORECASE)
+        lists = parent_obj.find_all(listcaptureRE)
         for item in lists:
-            matchobj = re.match(listcaptureRE, item, re.IGNORECASE)
-            if int(mathobj.group(1)) > recursion_level:
-                recursion_level = matchobj.group(1)
-        return recursion_level
+            matchobj = re.match(listcaptureRE, item.name)
+            if matchobj is not None:
+                if int(matchobj.group(1)) > recursion_level:
+                    recursion_level = int(matchobj.group(1))
+        return str(recursion_level)
+
+    def getTaskContent(self, parent_obj, level):
+        """Walk through the task and get the info"""
+        listcaptureRE = re.compile('list(\d)', re.IGNORECASE)
+        list_items = parent_obj.find_all('l{}item'.format(level), recursive=False)
+        for item in list_items:
+##            self.log.debug('Para {}'.format(item.para.string))
+            for nextitem in item:
+                self.log.debug(nextitem.string)
+            if item.find(listcaptureRE) is not None:
+                nextlevel = re.match(listcaptureRE, item.find(listcaptureRE).name)
+                self.getTaskContent(item.find(listcaptureRE), nextlevel.group(1))
+        
+        
         
     def __splitCode(self, tag):
         """Private method to split the task code into into its major parts"""
         tagattrs = tag.attrs
+        if 'varnbr' in tagattrs:
+            var = tagattrs['varnbr']
+        else:
+            var = ''
         return '-'.join((tagattrs['chapnbr'],
                          tagattrs['sectnbr'],
                          tagattrs['subjnbr'],
                          tagattrs['func'],
                          tagattrs['seq'],
-                         tagattrs['confltr']+tagattrs['varnbr']
+                         tagattrs['confltr']+var
                          ))
 
 
@@ -101,7 +124,10 @@ class SGMLtools:
     
 
 if __name__ == '__main__':
-    ddata = SGMLtools('AMM.SGM')
+    ddata = SGMLtools('d:/Code/A320/AMM.SGM')
+    boop = ddata.findAllTasks()
+    for things in boop:
+        ddata.extractTaskInfo(things)
 
 
 
