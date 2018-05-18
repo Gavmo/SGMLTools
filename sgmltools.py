@@ -12,7 +12,7 @@ class SGMLtools:
     def __init__(self, source_file):
         """Load the source data"""
         self.log = logging
-        self.log.basicConfig(level=logging.DEBUG)
+        self.log.basicConfig(level=logging.INFO)
         self.log.debug('Opening {}'.format(source_file))
         with open(source_file, 'r') as source_data:
             data = source_data.read()
@@ -21,18 +21,18 @@ class SGMLtools:
         self.log.info('AC model: {}'.format(self.manual.amm['model']))
         self.log.debug('Init OK')
 
-    def findAllTasks(self):
+    def findAllTasks(self, recurse_limit=None):
         """Searach the Manual for anything with a task tag
 
         Returns a list
         """
-        return self.manual.find_all('task')
+        return self.manual.find_all('task', limit=recurse_limit)
 
     def extractTaskInfo(self, task):
         """Get all info from a task"""
         taskcontent = dict()
         title = task.title.string
-        self.log.debug('Found {}'.format(title))
+        self.log.info('TASK: {}'.format(title))
         refstring = self.__splitCode(task)
         self.log.debug(refstring)
         topics = task.find_all("topic")
@@ -40,11 +40,17 @@ class SGMLtools:
             subtasks = topics[x].find_all("subtask")
             for y in range(0, len(subtasks)):
                 subtask = dict()
-                self.log.debug("Effectivity: %s\nAccomplish A320 AMM %s Subtask %s: %s" % (subtasks[y].effect['effrg'],
-                                                                                           topics[x].title.string,
-                                                                                           self.__splitCode(subtasks[y]),
-##                                                                                           subtask_string(subtasks[y]),
-                                                                                           subtasks[y].para.string))
+##                subtasks[y].effect['effrg']
+                try:
+                    effec = subtasks[y].effect['effrg']
+                except TypeError:
+                    self.log.warning('TypeError on {}'.format(title))
+                    continue
+##                self.log.debug("Effectivity: %s\nAccomplish A320 AMM %s Subtask %s: %s" % (effec,
+##                                                                                           topics[x].title.string,
+##                                                                                           self.__splitCode(subtasks[y]),
+####                                                                                           subtask_string(subtasks[y]),
+##                                                                                           subtasks[y].para.string))
                 if subtasks[y].find('list1') is not None:
                     self.getTaskContent(subtasks[y].list1,1)
                 if subtasks[y].find("cblst") != None:
@@ -64,17 +70,44 @@ class SGMLtools:
 
     def getTaskContent(self, parent_obj, level):
         """Walk through the task and get the info"""
+##        self.log.warning('LEVEL INPUT {}'.format(level))
         listcaptureRE = re.compile('list(\d)', re.IGNORECASE)
         list_items = parent_obj.find_all('l{}item'.format(level), recursive=False)
         for item in list_items:
 ##            self.log.debug('Para {}'.format(item.para.string))
             for nextitem in item:
-                self.log.debug(nextitem.string)
+                self.log.debug('Parent:{} This:{} Content:{}'.format(nextitem.parent.name, nextitem.name, nextitem.string))
+                if nextitem.para is None:
+                    self.log.debug("Childdata")
+                    listitemcontent = list()
+                    for space in range(int(level)):
+                        listitemcontent.append(' ')
+                    for child in nextitem.descendants:
+                        self.log.debug('Parent:{} This:{} Content:{}'.format(child.parent.name, child.name, child.string))
+                        if child.string is not None and child.parent.name not in ['pan', 'refint', 'con', 'std', 'stdname']:
+                            string_ob = str(child.string).rstrip()
+                            string_ob = string_ob.lstrip()
+                            listitemcontent.append(string_ob)
+                    while '' in listitemcontent:
+                        listitemcontent.remove('')
+                    self.log.info(' '.join(self.__fixPunctuation(listitemcontent)))
+##                    print(listitemcontent)
             if item.find(listcaptureRE) is not None:
                 nextlevel = re.match(listcaptureRE, item.find(listcaptureRE).name)
                 self.getTaskContent(item.find(listcaptureRE), nextlevel.group(1))
         
-        
+    def __fixPunctuation(self, list_to_fix):
+        """Private method to fix the punctuation"""
+        punclist = ['.', ',']
+        for punc in punclist:
+            while punc in list_to_fix:
+                try:
+                    index_pos = list_to_fix.index(punc)
+                except ValueError:
+                    continue
+                popped_item = list_to_fix.pop(index_pos)
+                list_to_fix[index_pos - 1] = list_to_fix[index_pos - 1] + popped_item
+        return list_to_fix
         
     def __splitCode(self, tag):
         """Private method to split the task code into into its major parts"""
@@ -125,7 +158,7 @@ class SGMLtools:
 
 if __name__ == '__main__':
     ddata = SGMLtools('d:/Code/A320/AMM.SGM')
-    boop = ddata.findAllTasks()
+    boop = ddata.findAllTasks(recurse_limit=250)
     for things in boop:
         ddata.extractTaskInfo(things)
 
