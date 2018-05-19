@@ -12,7 +12,7 @@ class SGMLtools:
     def __init__(self, source_file):
         """Load the source data"""
         self.log = logging
-        self.log.basicConfig(level=logging.INFO)
+        self.log.basicConfig(level=logging.DEBUG)
         self.log.debug('Opening {}'.format(source_file))
         with open(source_file, 'r') as source_data:
             data = source_data.read()
@@ -33,6 +33,8 @@ class SGMLtools:
         taskcontent = dict()
         title = task.title.string
         self.log.info('TASK: {}'.format(title))
+        self.zone_panHandler(task, "zone")
+        self.zone_panHandler(task, "pan")
         refstring = self.__splitCode(task)
         self.log.debug(refstring)
         topics = task.find_all("topic")
@@ -83,13 +85,14 @@ class SGMLtools:
                     for space in range(int(level)):
                         listitemcontent.append(' ')
                     for child in nextitem.descendants:
-                        self.log.info('Parent:{} This:{} Content:{}'.format(child.parent.name, child.name, child.string))
+##                        self.log.info('Parent:{} This:{} Content:{}'.format(child.parent.name, child.name, child.string))
                         if child.string is not None and child.parent.name not in ['pan', 'refint', 'con', 'std', 'stdname']:
                             string_ob = str(child.string).rstrip()
                             string_ob = string_ob.lstrip()
                             listitemcontent.append(string_ob)
-                        if child.parent.name == "cblst":
-                            self.cblstHandler(child.parent)
+##                            THis is only commented out to reduce debug clutter
+##                        if child.parent.name == "cblst":
+##                            self.cblstHandler(child.parent)
                     while '' in listitemcontent:
                         listitemcontent.remove('')
 ##                    self.log.info(' '.join(self.__fixPunctuation(listitemcontent)))
@@ -147,6 +150,26 @@ class SGMLtools:
                 cb_lst_all.append(cb_data_dict)
             self.log.debug(cb_lst_all)
 
+    def zone_panHandler(self, taskblock, target):
+        """Extract zones or panels from the pretopic.  
+
+        Pass in the string "zone" or "panel" as the target argument
+        """
+        list_items = taskblock.list1.find_all("l1item")
+        zone_pan_set = set()
+        for item in list_items:
+            if item.para.string != "Work Zones and Access Panels":
+                continue
+            else:
+                zones_pans = item.find_all(target)
+                if zones_pans is not None:
+                    for zone_pan_obj in zones_pans:
+                        zone_pan = zone_pan_obj.string.rstrip()
+                        zone_pan_set.add(zone_pan)
+        self.log.debug('{}: {}'.format(target.upper(), zone_pan_set))
+            
+
+    
 ##    def getSteps(self, task, zone):
 ##        topics = task.find_all("topic")
 ##        print(task.title.string)
