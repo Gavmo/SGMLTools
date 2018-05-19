@@ -1,6 +1,6 @@
-import openpyxl
-import xlrd
-import csv
+##import openpyxl
+##import xlrd
+##import csv
 from bs4 import BeautifulSoup
 ##from tabulate import tabulate
 import re
@@ -127,7 +127,7 @@ class SGMLtools:
                          ))
 
     def cblstHandler(self, cblst_block):
-        """Extract the Circuit Breaker data and display it nicely"""
+        """Extract the Circuit Breaker data"""
         cb_sub_lists = cblst_block.find_all("cbsublst")
         cb_data_elements = ["effect", "cb", "cbname", "pan", "cbloc"]
         cb_lst_all = list()
@@ -137,43 +137,43 @@ class SGMLtools:
                 ein_content = cb_sub_list.find("ein").string
                 if cb_sub_list.find("equname") is not None:
                     equname_content = cb_sub_list.find("equname").string
-                    self.log.info("{} - {}".format(ein_content, equname_content))
+                    self.log.debug("{} - {}".format(ein_content, equname_content))
                 else:
-                    self.log.info(ein_content)
+                    self.log.debug(ein_content)
             cb_data_list = cb_sub_list.find_all("cbdata")
             for cb_data in cb_data_list:
                 for element in cb_data_elements:
                     cb_data_dict[element] = cb_data.find(element).string
                 cb_lst_all.append(cb_data_dict)
-            self.log.info(cb_lst_all)
+            self.log.debug(cb_lst_all)
 
-    def getSteps(self, task, zone):
-        topics = task.find_all("topic")
-        print(task.title.string)
-        side = get_side(zone)
-        if side is not None:
-            print(side)
-    ##    subtasks = task.find_all("subtask")
-        for x in range(0, len(topics)):
-            subtasks = topics[x].find_all("subtask")
-            for y in range(0, len(subtasks)):
-                print("Effectivity: %s\nAccomplish A320 AMM %s Subtask %s: %s" % (subtasks[y].effect['effrg'], topics[x].title.string, subtask_string(subtasks[y]), subtasks[y].para.string))
-                if subtasks[y].find("cblst") != None:
-                    cblst = subtasks[y].find("cblst")
-                    cbdata = cblst.find_all("cbdata")
-                    hdrs = ["FIN", "Name", "Panel", "Location", "Effectivity"]
-                    listofbreakers = []
-                    for z in range(0, len(cbdata)):
-                        row = []
-                        row.append(cbdata[z].find("cb").string)
-                        row.append(cbdata[z].find("cbname").string)
-                        row.append(cbdata[z].find("pan").string)
-                        row.append(cbdata[z].find("cbloc").string)
-                        effect = cbdata[z].find("effect")
-                        row.append(effect.attrs['effrg'])
-                        listofbreakers.append(row)
-                    print(tabulate(listofbreakers, hdrs, tablefmt="grid"))
-    ##        print(topics[x].title.string)
+##    def getSteps(self, task, zone):
+##        topics = task.find_all("topic")
+##        print(task.title.string)
+##        side = get_side(zone)
+##        if side is not None:
+##            print(side)
+##    ##    subtasks = task.find_all("subtask")
+##        for x in range(0, len(topics)):
+##            subtasks = topics[x].find_all("subtask")
+##            for y in range(0, len(subtasks)):
+##                print("Effectivity: %s\nAccomplish A320 AMM %s Subtask %s: %s" % (subtasks[y].effect['effrg'], topics[x].title.string, subtask_string(subtasks[y]), subtasks[y].para.string))
+##                if subtasks[y].find("cblst") != None:
+##                    cblst = subtasks[y].find("cblst")
+##                    cbdata = cblst.find_all("cbdata")
+##                    hdrs = ["FIN", "Name", "Panel", "Location", "Effectivity"]
+##                    listofbreakers = []
+##                    for z in range(0, len(cbdata)):
+##                        row = []
+##                        row.append(cbdata[z].find("cb").string)
+##                        row.append(cbdata[z].find("cbname").string)
+##                        row.append(cbdata[z].find("pan").string)
+##                        row.append(cbdata[z].find("cbloc").string)
+##                        effect = cbdata[z].find("effect")
+##                        row.append(effect.attrs['effrg'])
+##                        listofbreakers.append(row)
+##                    print(tabulate(listofbreakers, hdrs, tablefmt="grid"))
+##    ##        print(topics[x].title.string)
 
     
 
