@@ -2,7 +2,7 @@ import openpyxl
 import xlrd
 import csv
 from bs4 import BeautifulSoup
-from tabulate import tabulate
+##from tabulate import tabulate
 import re
 import logging
 
@@ -83,14 +83,16 @@ class SGMLtools:
                     for space in range(int(level)):
                         listitemcontent.append(' ')
                     for child in nextitem.descendants:
-                        self.log.debug('Parent:{} This:{} Content:{}'.format(child.parent.name, child.name, child.string))
+                        self.log.info('Parent:{} This:{} Content:{}'.format(child.parent.name, child.name, child.string))
                         if child.string is not None and child.parent.name not in ['pan', 'refint', 'con', 'std', 'stdname']:
                             string_ob = str(child.string).rstrip()
                             string_ob = string_ob.lstrip()
                             listitemcontent.append(string_ob)
+                        if child.parent.name == "cblst":
+                            self.cblstHandler(child.parent)
                     while '' in listitemcontent:
                         listitemcontent.remove('')
-                    self.log.info(' '.join(self.__fixPunctuation(listitemcontent)))
+##                    self.log.info(' '.join(self.__fixPunctuation(listitemcontent)))
 ##                    print(listitemcontent)
             if item.find(listcaptureRE) is not None:
                 nextlevel = re.match(listcaptureRE, item.find(listcaptureRE).name)
@@ -124,7 +126,26 @@ class SGMLtools:
                          tagattrs['confltr']+var
                          ))
 
-
+    def cblstHandler(self, cblst_block):
+        """Extract the Circuit Breaker data and display it nicely"""
+        cb_sub_lists = cblst_block.find_all("cbsublst")
+        cb_data_elements = ["effect", "cb", "cbname", "pan", "cbloc"]
+        cb_lst_all = list()
+        for cb_sub_list in cb_sub_lists:
+            cb_data_dict = dict()
+            if cb_sub_list.find("ein") is not None:
+                ein_content = cb_sub_list.find("ein").string
+                if cb_sub_list.find("equname") is not None:
+                    equname_content = cb_sub_list.find("equname").string
+                    self.log.info("{} - {}".format(ein_content, equname_content))
+                else:
+                    self.log.info(ein_content)
+            cb_data_list = cb_sub_list.find_all("cbdata")
+            for cb_data in cb_data_list:
+                for element in cb_data_elements:
+                    cb_data_dict[element] = cb_data.find(element).string
+                cb_lst_all.append(cb_data_dict)
+            self.log.info(cb_lst_all)
 
     def getSteps(self, task, zone):
         topics = task.find_all("topic")
