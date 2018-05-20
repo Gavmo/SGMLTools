@@ -12,17 +12,18 @@ While this will work on Python 2.7 it experiences issues with the extended ascii
 ## To Do List
 
 - Extractions:
-    - [ ]Tables
-    - [ ]Tooling
-    - [ ]Consumables
-    - [ ]Panels
-    - [x]Circuit Breakers
-    - [ ]Warnings/Cautions/Notes
+    - [ ] Tables
+    - [ ] Tooling
+    - [ ] Consumables
+    - [x] Panels and Zones
+    - [x] Circuit Breakers
+    - [ ] Warnings/Cautions
+    - [ ] Notes
 
 - Manuals:
-    - [ ]AMM
-    - [ ]MPD
-    - [ ]TEM
+    - [ ] AMM
+    - [ ] MPD
+    - [ ] TEM
 
 - Do something useful with the data.
 

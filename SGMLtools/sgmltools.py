@@ -6,18 +6,27 @@ from bs4 import BeautifulSoup
 import re
 import logging
 
-class SGMLtools:
+class AMMtools:
     """Master class to work with Airbus SGML files"""
 
-    def __init__(self, source_file):
+    def __init__(self, source_path):
         """Load the source data"""
         self.log = logging
         self.log.basicConfig(level=logging.DEBUG)
-        self.log.debug('Opening {}'.format(source_file))
-        with open(source_file, 'r') as source_data:
+
+        with open(source_path+'AMM.SWE', 'r') as warning_file:
+            warning_data = warning_file.readlines()
+            self.warnings = self.buildEntityDict(warning_data)
+            self.log.debug('Warnings loaded')
+        with open(source_path+'AMM.SCE', 'r') as warning_file:
+            warning_data = warning_file.readlines()
+            self.cautions = self.buildEntityDict(warning_data)
+            self.log.debug('Cautions loaded')
+        self.log.debug('Opening {}'.format(source_path+'AMM.SGM'))
+        with open(source_path+'AMM.SGM', 'r') as source_data:
             data = source_data.read()
             self.manual = BeautifulSoup(data, 'html.parser')
-            self.log.debug('Parsing succesful')
+            self.log.debug('AMM Parsing succesful')            
         self.log.info('AC model: {}'.format(self.manual.amm['model']))
         self.log.debug('Init OK')
 
@@ -78,9 +87,9 @@ class SGMLtools:
         for item in list_items:
 ##            self.log.debug('Para {}'.format(item.para.string))
             for nextitem in item:
-                self.log.debug('Parent:{} This:{} Content:{}'.format(nextitem.parent.name, nextitem.name, nextitem.string))
+##                self.log.debug('Parent:{} This:{} Content:{}'.format(nextitem.parent.name, nextitem.name, nextitem.string))
                 if nextitem.para is None:
-                    self.log.debug("Childdata")
+##                    self.log.debug("Childdata")
                     listitemcontent = list()
                     for space in range(int(level)):
                         listitemcontent.append(' ')
@@ -93,6 +102,15 @@ class SGMLtools:
 ##                            THis is only commented out to reduce debug clutter
 ##                        if child.parent.name == "cblst":
 ##                            self.cblstHandler(child.parent)
+                        if child.parent.name in ['warning', 'caution']:
+                            try:
+                                if child.string[1] == 'W':
+                                    self.log.debug(self.warnings[child.string[1:7]])
+                                elif child.string[1] == 'C':
+                                    self.log.debug(self.cautions[child.string[1:7]])
+                            except KeyError:
+                                self.log.warning('Unable to locate Warning/Caution {}'.format(child.string[1:7]))
+                                
                     while '' in listitemcontent:
                         listitemcontent.remove('')
 ##                    self.log.info(' '.join(self.__fixPunctuation(listitemcontent)))
@@ -166,9 +184,38 @@ class SGMLtools:
                     for zone_pan_obj in zones_pans:
                         zone_pan = zone_pan_obj.string.rstrip()
                         zone_pan_set.add(zone_pan)
-        self.log.debug('{}: {}'.format(target.upper(), zone_pan_set))
+##        self.log.debug('{}: {}'.format(target.upper(), zone_pan_set))
             
+    def buildEntityDict(self, warning_data):
+        """Build a dictionary to reference Warnings/Cautions/Notes by their ID.
 
+
+        """
+        warning_dict = dict()
+        opentagRE  = re.compile('"<PARA>.*')
+        warncodeRE = re.compile('[WC]\..{4}')
+        closetagRE = re.compile('<\/PARA>">')
+        open_armed = True
+        warningstring = str()
+        for line in warning_data:
+            if open_armed is True:
+                code = warncodeRE.search(line)
+                warningstring = line[opentagRE.search(line).start()+1:]
+                
+                open_armed = False
+            else:
+                if closetagRE.search(line) is None:
+                    warningstring = warningstring + line
+                else:
+                    warningstring = warningstring+line[:closetagRE.search(line).end()-2]
+                    open_armed = True
+                    warning_dict[code.group(0)] = warningstring
+                    warningstring = ''
+        return warning_dict
+   
+                
+            
+            
     
 ##    def getSteps(self, task, zone):
 ##        topics = task.find_all("topic")
@@ -201,7 +248,7 @@ class SGMLtools:
     
 
 if __name__ == '__main__':
-    ddata = SGMLtools('d:/Code/A320/AMM.SGM')
+    ddata = AMMtools('d:/Code/A320/Part_1/SGML_000042029356/SGML/')
     boop = ddata.findAllTasks(recurse_limit=250)
     for things in boop:
         ddata.extractTaskInfo(things)
