@@ -17,7 +17,7 @@ While this will work on Python 2.7 it experiences issues with the extended ascii
     - [ ] Consumables
     - [x] Panels and Zones
     - [x] Circuit Breakers
-    - [ ] Warnings/Cautions
+    - [x] Warnings/Cautions
     - [ ] Notes
 
 - Manuals:
