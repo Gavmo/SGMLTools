@@ -40,10 +40,15 @@ class AMMtools:
     def extractTaskInfo(self, task):
         """Get all info from a task"""
         taskcontent = dict()
-        title = task.title.string
+        try:
+            title = task.title.string
+        except AttributeError:
+            self.log.warning('Failed to extract a task here')
+            return None
         self.log.info('TASK: {}'.format(title))
         self.zone_panHandler(task, "zone")
         self.zone_panHandler(task, "pan")
+        self.toolHandler(task)
         refstring = self.__splitCode(task)
         self.log.debug(refstring)
         topics = task.find_all("topic")
@@ -57,6 +62,8 @@ class AMMtools:
                 except TypeError:
                     self.log.warning('TypeError on {}'.format(title))
                     continue
+                except KeyError:
+                    self.log.warning('KeyError on {}'.format(title))
 ##                self.log.debug("Effectivity: %s\nAccomplish A320 AMM %s Subtask %s: %s" % (effec,
 ##                                                                                           topics[x].title.string,
 ##                                                                                           self.__splitCode(subtasks[y]),
@@ -95,22 +102,23 @@ class AMMtools:
                         listitemcontent.append(' ')
                     for child in nextitem.descendants:
 ##                        self.log.info('Parent:{} This:{} Content:{}'.format(child.parent.name, child.name, child.string))
-                        if child.string is not None and child.parent.name not in ['pan', 'refint', 'con', 'std', 'stdname']:
+                        if child.string is not None and child.name not in ['pan', 'con', 'std', 'stdname', 'cblst', 'refint', 'refext']:
                             string_ob = str(child.string).rstrip()
                             string_ob = string_ob.lstrip()
                             listitemcontent.append(string_ob)
+########################################################################################                            
 ##                            THis is only commented out to reduce debug clutter
 ##                        if child.parent.name == "cblst":
 ##                            self.cblstHandler(child.parent)
-                        if child.parent.name in ['warning', 'caution']:
-                            try:
-                                if child.string[1] == 'W':
-                                    self.log.debug(self.warnings[child.string[1:7]])
-                                elif child.string[1] == 'C':
-                                    self.log.debug(self.cautions[child.string[1:7]])
-                            except KeyError:
-                                self.log.warning('Unable to locate Warning/Caution {}'.format(child.string[1:7]))
-                                
+##                        if child.parent.name in ['warning', 'caution']:
+##                            try:
+##                                if child.string[1] == 'W':
+##                                    self.log.debug(self.warnings[child.string[1:7]])
+##                                elif child.string[1] == 'C':
+##                                    self.log.debug(self.cautions[child.string[1:7]])
+##                            except KeyError:
+##                                self.log.warning('Unable to locate Warning/Caution {}'.format(child.string[1:7]))
+###########################################################################                                
                     while '' in listitemcontent:
                         listitemcontent.remove('')
 ##                    self.log.info(' '.join(self.__fixPunctuation(listitemcontent)))
@@ -185,9 +193,29 @@ class AMMtools:
                         zone_pan = zone_pan_obj.string.rstrip()
                         zone_pan_set.add(zone_pan)
 ##        self.log.debug('{}: {}'.format(target.upper(), zone_pan_set))
+
+    def toolHandler(self, taskblock):
+        """Get tool info from the pretopic table"""
+        list_items = taskblock.list1.find_all("l1item")
+        toollist = list()
+        for item in list_items:
+            if item.para.string != "Fixtures, Tools, Test and Support Equipment":
+                continue
+            else:
+                rows = item.table.tgroup.tbody.find_all("row")
+                for row in rows:
+                    tool_obj = list()
+                    if row.entry.para.toolnbr is not None:
+                        tool_obj.append(row.entry.para.toolnbr.string)
+                        tool_obj.append(row.entry.next_sibling.para.string)
+                        tool_obj.append(row.entry.next_sibling.next_sibling.para.string)
+                        toollist.append(tool_obj)
+        self.log.debug('Tooling: {}'.format(toollist))
+                        
+                    
             
     def buildEntityDict(self, warning_data):
-        """Build a dictionary to reference Warnings/Cautions/Notes by their ID.
+        """Build a dictionary to reference Warnings/Cautions by their ID.
 
 
         """
@@ -201,7 +229,6 @@ class AMMtools:
             if open_armed is True:
                 code = warncodeRE.search(line)
                 warningstring = line[opentagRE.search(line).start()+1:]
-                
                 open_armed = False
             else:
                 if closetagRE.search(line) is None:
@@ -249,9 +276,10 @@ class AMMtools:
 
 if __name__ == '__main__':
     ddata = AMMtools('d:/Code/A320/Part_1/SGML_000042029356/SGML/')
-    boop = ddata.findAllTasks(recurse_limit=250)
+    boop = ddata.findAllTasks(recurse_limit=1000)
     for things in boop:
         ddata.extractTaskInfo(things)
+
 
 
 

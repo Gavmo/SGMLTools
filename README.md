@@ -13,7 +13,8 @@ While this will work on Python 2.7 it experiences issues with the extended ascii
 
 - Extractions:
     - [ ] Tables
-    - [ ] Tooling
+    - [x] Specific Tooling
+    - [ ] Non-Specific Tooling
     - [ ] Consumables
     - [x] Panels and Zones
     - [x] Circuit Breakers
@@ -24,6 +25,9 @@ While this will work on Python 2.7 it experiences issues with the extended ascii
     - [ ] AMM
     - [ ] MPD
     - [ ] TEM
+    
+- Fixups:
+    - [ ] References
 
 - Do something useful with the data.
 
