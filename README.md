@@ -14,7 +14,6 @@ While this will work on Python 2.7 it experiences issues with the extended ascii
 - Extractions:
     - [ ] Tables
     - [x] Specific Tooling
-    - [ ] Non-Specific Tooling
     - [ ] Consumables
     - [x] Panels and Zones
     - [x] Circuit Breakers

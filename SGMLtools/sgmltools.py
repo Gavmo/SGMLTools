@@ -106,6 +106,8 @@ class AMMtools:
                             string_ob = str(child.string).rstrip()
                             string_ob = string_ob.lstrip()
                             listitemcontent.append(string_ob)
+                            if child.name == 'note':
+                                self.log.debug('NOTE: {}'.format(child.string))
 ########################################################################################                            
 ##                            THis is only commented out to reduce debug clutter
 ##                        if child.parent.name == "cblst":
@@ -118,7 +120,7 @@ class AMMtools:
 ##                                    self.log.debug(self.cautions[child.string[1:7]])
 ##                            except KeyError:
 ##                                self.log.warning('Unable to locate Warning/Caution {}'.format(child.string[1:7]))
-###########################################################################                                
+########################################################################################                                
                     while '' in listitemcontent:
                         listitemcontent.remove('')
 ##                    self.log.info(' '.join(self.__fixPunctuation(listitemcontent)))
@@ -210,9 +212,14 @@ class AMMtools:
                         tool_obj.append(row.entry.next_sibling.para.string)
                         tool_obj.append(row.entry.next_sibling.next_sibling.para.string)
                         toollist.append(tool_obj)
+####Commented out for now.  It looks like this result is always a torque wrench.
+##                    if row.entry.para.string == 'No specific' and len(row.find_all('entry')) == 2:
+##                        tool_obj.append(row.entry.para.string)
+##                        tool_obj.append(row.entry.next_sibling.para.string)
+##                        print(row.entry.next_sibling.para.prettify())
+##                        toollist.append(tool_obj)
         self.log.debug('Tooling: {}'.format(toollist))
-                        
-                    
+        return toollist
             
     def buildEntityDict(self, warning_data):
         """Build a dictionary to reference Warnings/Cautions by their ID.
