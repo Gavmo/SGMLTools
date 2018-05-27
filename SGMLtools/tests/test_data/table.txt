@@ -1,0 +1,251 @@
+<table>
+ <tgroup cols="5">
+  <colspec colname="COL1" colwidth="2.0*">
+   <colspec colname="COL2" colwidth="1.0*">
+    <colspec colname="COL3" colwidth="1.4*">
+     <colspec colname="COL4" colwidth="1.7*">
+      <colspec colname="COL5" colwidth="1.8*">
+       <spanspec nameend="COL5" namest="COL1" spanname="WHOLE">
+        <thead>
+         <row>
+          <entry align="CENTER" colname="COL1">
+           <para>
+            DESCRIPTION
+           </para>
+          </entry>
+          <entry align="CENTER" colname="COL2">
+           <para>
+            ITEM
+           </para>
+          </entry>
+          <entry align="CENTER" colname="COL3">
+           <para>
+            QUANTITY
+           </para>
+          </entry>
+          <entry align="CENTER" colname="COL4">
+           <para>
+            LENGTH
+           </para>
+          </entry>
+          <entry align="CENTER" colname="COL5">
+           <para>
+            MIN ULTIMATE FAILURE LOAD
+           </para>
+          </entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry colname="COL1">
+           <para>
+            Textile Roundsling
+           </para>
+          </entry>
+          <entry colname="COL2">
+           <para>
+            1
+           </para>
+          </entry>
+          <entry colname="COL3">
+           <para>
+            4
+           </para>
+          </entry>
+          <entry colname="COL4">
+           <para>
+            2000 mm
+           </para>
+           <para>
+            78.74 in
+           </para>
+          </entry>
+          <entry colname="COL5">
+           <para>
+            12945 daN
+           </para>
+           <para>
+            29101 lbf
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry colname="COL1">
+           <para>
+            Joker
+           </para>
+          </entry>
+          <entry colname="COL2">
+           <para>
+            2
+           </para>
+          </entry>
+          <entry colname="COL3">
+           <para>
+            4
+           </para>
+          </entry>
+          <entry colname="COL4">
+           <para>
+            /
+           </para>
+          </entry>
+          <entry colname="COL5">
+           <para>
+            24271 daN
+           </para>
+           <para>
+            54563 lbf
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry colname="COL1">
+           <para>
+            Polyester Lashing
+           </para>
+           <para>
+            Strap with Ratchet
+           </para>
+           <para>
+            Mechanism (with
+           </para>
+           <para>
+            the ratchet
+           </para>
+           <para>
+            mechanism in the
+           </para>
+           <para>
+            center of the
+           </para>
+           <para>
+            lash)
+           </para>
+          </entry>
+          <entry colname="COL2">
+           <para>
+            4 &amp; 7
+           </para>
+          </entry>
+          <entry colname="COL3">
+           <para>
+            8
+           </para>
+          </entry>
+          <entry colname="COL4">
+           <para>
+            as necessary
+           </para>
+          </entry>
+          <entry colname="COL5">
+           <para>
+            9807 daN
+           </para>
+           <para>
+            22047 lbf
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry colname="COL1">
+           <para>
+            Steel Bow Shackle
+           </para>
+          </entry>
+          <entry colname="COL2">
+           <para>
+            5
+           </para>
+          </entry>
+          <entry colname="COL3">
+           <para>
+            8
+           </para>
+          </entry>
+          <entry colname="COL4">
+           <para>
+            /
+           </para>
+          </entry>
+          <entry colname="COL5">
+           <para>
+            7845 daN
+           </para>
+           <para>
+            17636 lbf
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry colname="COL1">
+           <para>
+            Master Link
+           </para>
+          </entry>
+          <entry colname="COL2">
+           <para>
+            3
+           </para>
+          </entry>
+          <entry colname="COL3">
+           <para>
+            4
+           </para>
+          </entry>
+          <entry colname="COL4">
+           <para>
+            /
+           </para>
+          </entry>
+          <entry colname="COL5">
+           <para>
+            24271 daN
+           </para>
+           <para>
+            54563 lbf
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry colname="COL1">
+           <para>
+            Ground Ring (set
+           </para>
+           <para>
+            into ground)
+           </para>
+          </entry>
+          <entry colname="COL2">
+           <para>
+            6
+           </para>
+          </entry>
+          <entry colname="COL3">
+           <para>
+            8
+           </para>
+          </entry>
+          <entry colname="COL4">
+           <para>
+            /
+           </para>
+          </entry>
+          <entry colname="COL5">
+           <para>
+            15691 daN
+           </para>
+           <para>
+            35275 lbf
+           </para>
+          </entry>
+         </row>
+        </tbody>
+       </spanspec>
+      </colspec>
+     </colspec>
+    </colspec>
+   </colspec>
+  </colspec>
+ </tgroup>
+</table>

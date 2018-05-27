@@ -1,0 +1,18 @@
+<note>
+ <para>
+  Use a
+  <stdname>
+   GAGE - SET, FEELER
+  </stdname>
+  to measure the gaps. Use a
+  <ted>
+   <toolnbr>
+    460005834
+   </toolnbr>
+   <toolname>
+    SPANNER - TUBE
+   </toolname>
+  </ted>
+  to torque the nut.
+ </para>
+</note>
