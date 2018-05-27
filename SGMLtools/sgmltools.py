@@ -17,12 +17,12 @@ class AMMtools:
         with open(source_path+'AMM.SWE', 'r') as warning_file:
             warning_data = warning_file.readlines()
             self.warnings = self.buildEntityDict(warning_data)
-            self.log.debug('Warnings loaded')
+            self.log.info('Warnings loaded')
         with open(source_path+'AMM.SCE', 'r') as warning_file:
             warning_data = warning_file.readlines()
             self.cautions = self.buildEntityDict(warning_data)
-            self.log.debug('Cautions loaded')
-        self.log.debug('Opening {}'.format(source_path+'AMM.SGM'))
+            self.log.info('Cautions loaded')
+        self.log.info('Opening {}'.format(source_path+'AMM.SGM'))
         with open(source_path+'AMM.SGM', 'r') as source_data:
             data = source_data.read()
             self.manual = BeautifulSoup(data, 'html.parser')
@@ -50,7 +50,7 @@ class AMMtools:
         self.zone_panHandler(task, "pan")
         self.toolHandler(task)
         refstring = self.__splitCode(task)
-        self.log.debug(refstring)
+        self.log.info(refstring)
         topics = task.find_all("topic")
         for x in range(0, len(topics)):
             subtasks = topics[x].find_all("subtask")
@@ -106,8 +106,11 @@ class AMMtools:
                             string_ob = str(child.string).rstrip()
                             string_ob = string_ob.lstrip()
                             listitemcontent.append(string_ob)
-                            if child.name == 'note':
+                            if child.parent.name == 'note':
                                 self.log.debug('NOTE: {}'.format(child.string))
+                            if child.parent.name == 'table':
+                                print("Found Table")
+                                tableHandler(child)                                                                
 ########################################################################################                            
 ##                            THis is only commented out to reduce debug clutter
 ##                        if child.parent.name == "cblst":
@@ -125,9 +128,52 @@ class AMMtools:
                         listitemcontent.remove('')
 ##                    self.log.info(' '.join(self.__fixPunctuation(listitemcontent)))
 ##                    print(listitemcontent)
+                elif nextitem.name == 'note':
+                    self.log.info(self.noteHandler(nextitem))
+##                elif nextitem.name == 'table':
+##                    print("Found Table")
+##                    self.tableHandler(nextitem)
             if item.find(listcaptureRE) is not None:
                 nextlevel = re.match(listcaptureRE, item.find(listcaptureRE).name)
                 self.getTaskContent(item.find(listcaptureRE), nextlevel.group(1))
+
+    def noteHandler(self, noteblock):
+        """Extract a note"""
+        
+        def elementignore(parentlist):
+            """"Sub routine to assist ignoring unlistitems"""
+            ignorelist = ['refint',
+                          'unlist',
+                          'unlitem']
+            for parent in parentlist:
+                if parent.name in ignorelist:
+                    return True
+            return False
+        
+        whitelist = ['para',
+                     'refblock',
+                     'effect',
+                     'note'
+                     ]
+        notelist = list()
+        skip = False
+        if len(noteblock.find_all("para")) >= 1:
+            for item in noteblock.descendants:
+                if skip == True:
+                    skip = False
+                    continue
+                if item.string is not None:
+                    if elementignore(item.parents) is True:
+##                        self.log.debug("Ignored {}".format(item.parent.name))
+                    elif item.parent.name in whitelist:
+                        notelist.append(item.string)
+                    else:
+                        self.log.warning("Unhandled element {} in note block".format(item.parent.name))
+                    skip = True
+                elif item.name == 'unlist':
+                    notelist.append(self.__unlistHandler(item))
+        return ' '.join(notelist)
+            
         
     def __fixPunctuation(self, list_to_fix):
         """Private method to fix the punctuation"""
@@ -156,6 +202,16 @@ class AMMtools:
                          tagattrs['seq'],
                          tagattrs['confltr']+var
                          ))
+
+    def __unlistHandler(self, unlistblock):
+        """Extract evey unlitem and return as ~ %TEXT\n"""
+        returnstr = '\n'
+        for unlitem in unlistblock.find_all("unlitem"):
+            if len(unlitem.find_all("para")) != 1:
+                self.log.warning("Found something other than a single UNLITEM in a noteblock")
+            else:
+                returnstr = returnstr + '~ {}\n'.format(unlitem.para.string)
+        return returnstr
 
     def cblstHandler(self, cblst_block):
         """Extract the Circuit Breaker data"""
@@ -220,6 +276,58 @@ class AMMtools:
 ##                        toollist.append(tool_obj)
         self.log.debug('Tooling: {}'.format(toollist))
         return toollist
+
+    def tableHandler_dep(self, tableblock):
+        """Extract information from a table element"""
+        tabledict = dict()
+        tablegroups = tableblock.find_all("tgroup")
+        print(tableblock.prettify())
+        if tableblock.find_all("title") is not None:
+            self.log.warning("An unhandled title element exists in TGROUP")
+        for tgroup in tablegroups:
+            self.log.debug(len(tgroup.thead.find_all("row")))
+
+    def tableHandler(self, tableblock):
+        """Extract information from a table element"""
+        tabledict = dict()
+        headerlist = list()
+        tablegroups = tableblock.find_all("tgroup")
+        if len(tableblock.find_all("title")) != 0:
+            self.log.warning("An unhandled title element exists in TGROUP")
+        for tgroup in tablegroups:
+            rowdict = dict()
+            moop = tgroup.colspec
+            for x in range(int(tgroup['cols'])):
+                moop = moop.contents[0]
+            if moop.spanspec is not None:
+                thead = moop.spanspec.thead
+            else:
+                thead = moop.thead
+            if thead is not None:
+                for item in thead.row.find_all("entry"):
+                    if item.string is not None:
+                        headerstring = item.para.string.lstrip()
+                        headerstring = headerstring.rstrip()
+                        headerlist.append(headerstring.rstrip())
+                    else:
+                        headerlist.append('')
+            tgroupkey = "tgroup"+str(tablegroups.index(tgroup))
+            tabledict[tgroupkey] = headerlist
+            self.log.debug(headerlist)
+            for row in tgroup.tbody.find_all("row"):
+                rowlist = list()
+                for entry in row.find_all("entry"):
+                    entrys = str()
+                    for para in entry.find_all("para"):
+                        if para.string is not None:
+                            parastring = para.string.lstrip()
+                            parastring = parastring.rstrip()
+                            entrys = entrys + parastring + ' '
+                        else:
+                            entrys = ''
+                    rowlist.append(entrys.rstrip())
+                self.log.debug(rowlist)
+
             
     def buildEntityDict(self, warning_data):
         """Build a dictionary to reference Warnings/Cautions by their ID.
@@ -283,7 +391,7 @@ class AMMtools:
 
 if __name__ == '__main__':
     ddata = AMMtools('d:/Code/A320/Part_1/SGML_000042029356/SGML/')
-    boop = ddata.findAllTasks(recurse_limit=1000)
+    boop = ddata.findAllTasks(recurse_limit=250)
     for things in boop:
         ddata.extractTaskInfo(things)
 

@@ -18,7 +18,7 @@ While this will work on Python 2.7 it experiences issues with the extended ascii
     - [x] Panels and Zones
     - [x] Circuit Breakers
     - [x] Warnings/Cautions
-    - [ ] Notes
+    - [x] Notes
 
 - Manuals:
     - [ ] AMM
