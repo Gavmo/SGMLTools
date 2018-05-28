@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 ##from tabulate import tabulate
 import re
 import logging
+import sys
 
 class AMMtools:
     """Master class to work with Airbus SGML files"""
@@ -16,21 +17,21 @@ class AMMtools:
         if log_enable == True:
             self.log.basicConfig(level=logging.DEBUG)
         else:
-            self.log.basicConfig(level=logging.FATAL)
+            self.log.basicConfig(level=logging.CRITICAL)
         try:
             with open(source_path+'AMM.SWE', 'r') as warning_file:
                 warning_data = warning_file.readlines()
                 self.warnings = self.buildEntityDict(warning_data)
                 self.log.info('Warnings loaded')
         except FileNotFoundError:
-            self.log.critical("Did not find the warnings file on path: {}".format(source_path))
+            self.log.warning("Did not find the warnings file on path: {}".format(source_path))
         try:
             with open(source_path+'AMM.SCE', 'r') as warning_file:
                 warning_data = warning_file.readlines()
                 self.cautions = self.buildEntityDict(warning_data)
                 self.log.info('Cautions loaded')
         except FileNotFoundError:
-            self.log.critical("Did not find the cautions file on path: {}".format(source_path))
+            self.log.warning("Did not find the cautions file on path: {}".format(source_path))
         self.log.info('Opening {}'.format(source_path+'AMM.SGM'))
         with open(source_path+sourcefile, 'r') as source_data:
             data = source_data.read()
@@ -116,9 +117,9 @@ class AMMtools:
                             listitemcontent.append(string_ob)
                             if child.parent.name == 'note':
                                 self.log.debug('NOTE: {}'.format(child.string))
-                            if child.parent.name == 'table':
-                                print("Found Table")
-                                tableHandler(child)                                                                
+##                            if child.parent.name == 'table':
+##                                print("Found Table")
+##                                tableHandler(child)                                                                
 ########################################################################################                            
 ##                            THis is only commented out to reduce debug clutter
 ##                        if child.parent.name == "cblst":
@@ -136,11 +137,10 @@ class AMMtools:
                         listitemcontent.remove('')
 ##                    self.log.info(' '.join(self.__fixPunctuation(listitemcontent)))
 ##                    print(listitemcontent)
-                elif nextitem.name == 'note':
-                    self.log.info(self.noteHandler(nextitem))
-##                elif nextitem.name == 'table':
-##                    print("Found Table")
-##                    self.tableHandler(nextitem)
+##                elif nextitem.name == 'note':
+##                    self.log.info(self.noteHandler(nextitem))
+                elif nextitem.name == 'table':
+                    self.log.debug(self.tableHandler(nextitem))
             if item.find(listcaptureRE) is not None:
                 nextlevel = re.match(listcaptureRE, item.find(listcaptureRE).name)
                 self.getTaskContent(item.find(listcaptureRE), nextlevel.group(1))
@@ -178,7 +178,6 @@ class AMMtools:
                     continue
                 if item.string is not None:
                     if elementignore(item.parents) is True:
-##                        self.log.debug("Ignored {}".format(item.parent.name))
                         pass
                     elif item.parent.name in whitelist:
                         notelist.append(item.string)
@@ -302,11 +301,14 @@ class AMMtools:
     def tableHandler(self, tableblock):
         """Extract information from a table element"""
         tabledict = dict()
-        headerlist = list()
+        
+        tablelist = list()
         tablegroups = tableblock.find_all("tgroup")
         if len(tableblock.find_all("title")) != 0:
             self.log.warning("An unhandled title element exists in TGROUP")
         for tgroup in tablegroups:
+            headerlist = list()
+            headerlist.append('HEADER')
             rowdict = dict()
             moop = tgroup.colspec
             for x in range(int(tgroup['cols'])):
@@ -326,10 +328,17 @@ class AMMtools:
             tgroupkey = "tgroup"+str(tablegroups.index(tgroup))
             tabledict[tgroupkey] = headerlist
             self.log.debug(headerlist)
+            tablelist.append(headerlist)
             for row in tgroup.tbody.find_all("row"):
                 rowlist = list()
+                entrycounter = 1
                 for entry in row.find_all("entry"):
+                    while len(rowlist) < int(entry["colname"][3:]):
+                        rowlist.append('')
+                        entrycounter += 1
+                        continue                       
                     entrys = str()
+                    entrycounter += 1
                     for para in entry.find_all("para"):
                         if para.string is not None:
                             parastring = para.string.lstrip()
@@ -338,8 +347,11 @@ class AMMtools:
                         else:
                             entrys = ''
                     rowlist.append(entrys.rstrip())
+                while len(rowlist) < len(headerlist)-1:
+                    rowlist.append('')
                 self.log.debug(rowlist)
-
+                tablelist.append(rowlist)
+        return tablelist
             
     def buildEntityDict(self, warning_data):
         """Build a dictionary to reference Warnings/Cautions by their ID.
@@ -370,14 +382,15 @@ class AMMtools:
     def grabTestData(self, block, name):
         """Used to extract and format a block for testing purposes"""
 ##        print(block.prettify())
+        block = str(block[0])
         a = str()
         a = a + block.lstrip().rstrip().replace('\n', '')
         
         try:
-            open(self.source_path+'/test/test_data/'+name, 'r')
+            open(sys.path[0]+'/tests/test_data/'+name, 'r')
         except FileNotFoundError:
-            with open(self.source_path+'/test/test_data/'+name, 'w') as savefile:
-                    savefile.write(block)
+            with open(sys.path[0]+'/tests/test_data/'+name, 'w') as savefile:
+                    savefile.write(a)
             pass
             
     
