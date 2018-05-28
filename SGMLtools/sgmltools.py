@@ -9,10 +9,14 @@ import logging
 class AMMtools:
     """Master class to work with Airbus SGML files"""
 
-    def __init__(self, source_path, sourcefile="AMM.SGM"):
+    def __init__(self, source_path, sourcefile="AMM.SGM", log_enable=False):
         """Load the source data"""
         self.log = logging
-        self.log.basicConfig(level=logging.DEBUG)
+        self.source_path = source_path
+        if log_enable == True:
+            self.log.basicConfig(level=logging.DEBUG)
+        else:
+            self.log.basicConfig(level=logging.FATAL)
         try:
             with open(source_path+'AMM.SWE', 'r') as warning_file:
                 warning_data = warning_file.readlines()
@@ -220,7 +224,7 @@ class AMMtools:
         returnstr = '\n'
         for unlitem in unlistblock.find_all("unlitem"):
             if len(unlitem.find_all("para")) != 1:
-                self.log.warning("Found something other than a single UNLITEM in a noteblock")
+                self.log.warning("Found something other than a single PARA in a noteblock")
             else:
                 returnstr = returnstr + '~ {}\n'.format(unlitem.para.string)
         return returnstr
@@ -245,6 +249,7 @@ class AMMtools:
                     cb_data_dict[element] = cb_data.find(element).string
                 cb_lst_all.append(cb_data_dict)
             self.log.debug(cb_lst_all)
+        return cb_lst_all
 
     def zone_panHandler(self, taskblock, target):
         """Extract zones or panels from the pretopic.  
@@ -266,13 +271,15 @@ class AMMtools:
 ##        self.log.debug('{}: {}'.format(target.upper(), zone_pan_set))
 
     def toolHandler(self, taskblock):
-        """Get tool info from the pretopic table"""
+        """Get tool info from the task"""
         list_items = taskblock.list1.find_all("l1item")
         toollist = list()
         for item in list_items:
-            if item.para.string != "Fixtures, Tools, Test and Support Equipment":
+            this_string = item.para.string.lstrip().rstrip().replace('\n', '')
+            if this_string != "Fixtures, Tools, Test and Support Equipment":
                 continue
             else:
+
                 rows = item.table.tgroup.tbody.find_all("row")
                 for row in rows:
                     tool_obj = list()
@@ -288,6 +295,8 @@ class AMMtools:
 ##                        print(row.entry.next_sibling.para.prettify())
 ##                        toollist.append(tool_obj)
         self.log.debug('Tooling: {}'.format(toollist))
+        if len(toollist) > 0:
+            self.log.debug('Tooling: {}'.format(toollist))
         return toollist
 
     def tableHandler(self, tableblock):
@@ -358,8 +367,18 @@ class AMMtools:
                     warningstring = ''
         return warning_dict
    
-                
-            
+    def grabTestData(self, block, name):
+        """Used to extract and format a block for testing purposes"""
+##        print(block.prettify())
+        a = str()
+        a = a + block.lstrip().rstrip().replace('\n', '')
+        
+        try:
+            open(self.source_path+'/test/test_data/'+name, 'r')
+        except FileNotFoundError:
+            with open(self.source_path+'/test/test_data/'+name, 'w') as savefile:
+                    savefile.write(block)
+            pass
             
     
 ##    def getSteps(self, task, zone):
@@ -393,7 +412,7 @@ class AMMtools:
     
 
 if __name__ == '__main__':
-    ddata = AMMtools('d:/Code/A320/Part_1/SGML_000042029356/SGML/')
+    ddata = AMMtools('d:/Code/A320/Part_1/SGML_000042029356/SGML/', log_enable=True)
     boop = ddata.findAllTasks(recurse_limit=250)
     for things in boop:
         ddata.extractTaskInfo(things)
